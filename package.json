@@ -1,0 +1,17 @@
+{
+  "name": "mdtable-lint",
+  "version": "0.1.0",
+  "description": "A linter for markdown tables that reports exact line and column numbers.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "mdtable-lint": "./dist/cli.js"
+  },
+  "main": "./dist/linter.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
