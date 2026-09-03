@@ -54,9 +54,13 @@ row that has too many.
 
 A block of lines only counts as a table if a candidate header row (two or
 more `|`-separated cells) is immediately followed by a line made up only of
-`-`, `:`, `|`, and whitespace. Anything inside a fenced code block
-(` ``` ` or `~~~`) is ignored, so example tables in documentation about
-markdown don't get linted as if they were real.
+`-`, `:`, `|`, and whitespace. A single-column table is also recognized,
+but only when both the header and delimiter rows are framed by a pipe on
+each side (`| A |` over `| - |`) — otherwise a plain line followed by a
+`---` thematic break or setext heading underline would be mistaken for a
+table. Anything inside a fenced code block (` ``` ` or `~~~`) is ignored,
+so example tables in documentation about markdown don't get linted as if
+they were real.
 
 ## Design notes
 
@@ -67,8 +71,5 @@ Escaped pipes (`\|`) are treated as literal characters, not delimiters.
 
 ## Known limitations
 
-Single-column tables (`| A |` / `| - |` / `| B |`) aren't detected yet,
-since the header-detection heuristic requires at least two cells to avoid
-false positives on stray pipes in prose. Table alignment (`:---`, `---:`,
-`:---:`) is accepted but not currently checked against how cells are
-actually used.
+Table alignment (`:---`, `---:`, `:---:`) is accepted but not currently
+checked against how cells are actually used.

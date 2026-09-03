@@ -39,13 +39,23 @@ export function lintText(text: string): Finding[] {
     const headerCells = splitTableRow(line);
     const nextLine = lines[i + 1];
 
-    // A table needs at least two header cells and a delimiter row
-    // directly underneath, e.g. "| --- | --- |". Anything else with
-    // a stray pipe in it is left alone rather than flagged, since a
-    // single pipe in prose is not a table.
-    if (headerCells.length >= 2 && nextLine !== undefined && looksLikeSeparatorLine(nextLine)) {
-      i = lintTable(lines, i, headerCells, findings);
-      continue;
+    // A table needs either two or more header cells, or exactly one
+    // cell framed by a leading and trailing pipe (a single-column
+    // table), plus a delimiter row directly underneath, e.g.
+    // "| --- | --- |" or "| - |". A bare word followed by a "---"
+    // thematic break or setext heading underline must not match, so
+    // the single-column case additionally requires the delimiter row
+    // itself to be pipe-framed rather than just dash characters.
+    const isCandidateHeader = headerCells.length >= 2 || isFramedSingleColumn(line, headerCells);
+
+    if (isCandidateHeader && nextLine !== undefined && looksLikeSeparatorLine(nextLine)) {
+      const separatorShapeMatches =
+        headerCells.length >= 2 || isFramedSingleColumn(nextLine, splitTableRow(nextLine));
+
+      if (separatorShapeMatches) {
+        i = lintTable(lines, i, headerCells, findings);
+        continue;
+      }
     }
 
     i++;
@@ -136,6 +146,28 @@ function checkColumnCount(
 
 function looksLikeSeparatorLine(line: string): boolean {
   return SEPARATOR_LINE_CHARS.test(line) && line.includes('-');
+}
+
+// A single-column row only reads as a table row, rather than plain
+// text, when it is actually framed by a pipe on each side (e.g.
+// "| A |"). Without that framing there is nothing distinguishing it
+// from a normal line, so a lone unpiped word must never qualify.
+function isFramedSingleColumn(line: string, cells: Cell[]): boolean {
+  return cells.length === 1 && countUnescapedPipes(line) === 2;
+}
+
+function countUnescapedPipes(line: string): number {
+  let count = 0;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '\\') {
+      i++; // skip the escaped character, including an escaped pipe
+      continue;
+    }
+    if (line[i] === '|') {
+      count++;
+    }
+  }
+  return count;
 }
 
 // Splits a pipe-delimited row into cells and records the exact column
