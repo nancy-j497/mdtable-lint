@@ -51,6 +51,9 @@ row that has too many.
 - `table-invalid-separator` (error) — a separator cell contains something
   other than `-` and an optional leading/trailing `:`.
 - `table-empty-header-cell` (warning) — a header cell is blank.
+- `table-alignment-inconsistent` (warning) — two tables in the same file
+  share an identical header but declare different alignment (`:---`,
+  `---:`, `:---:`) for the same column.
 
 A block of lines only counts as a table if a candidate header row (two or
 more `|`-separated cells) is immediately followed by a line made up only of
@@ -71,5 +74,8 @@ Escaped pipes (`\|`) are treated as literal characters, not delimiters.
 
 ## Known limitations
 
-Table alignment (`:---`, `---:`, `:---:`) is accepted but not currently
-checked against how cells are actually used.
+Alignment consistency is only checked across tables that repeat the exact
+same header text within one file. A single table's own alignment choices
+are never flagged, since there's nothing to compare them against, and
+there's no check yet for whether cell content actually agrees with its
+column's declared alignment.
