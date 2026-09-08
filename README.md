@@ -44,6 +44,18 @@ The column always points at the exact spot the problem lives, whether
 that's a missing column at the end of a short row or the first cell of a
 row that has too many.
 
+## Fixing short rows
+
+```
+node dist/cli.js --fix notes.md
+```
+
+`--fix` rewrites every row that has *fewer* cells than the header, padding
+it with empty cells (or `---` cells, for a short separator row) until the
+column count matches. It does not touch rows that have too many cells,
+since there's no reliable way to guess which extra cell is the mistake —
+run without `--fix` and fix those by hand.
+
 ## Rules
 
 - `table-column-count-mismatch` (error) — a separator or body row doesn't

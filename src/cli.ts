@@ -1,5 +1,5 @@
-import { readFileSync } from 'fs';
-import { lintText, Finding } from './linter.js';
+import { readFileSync, writeFileSync } from 'fs';
+import { lintText, fixText, Finding } from './linter.js';
 
 function formatFinding(file: string, finding: Finding, lines: string[]): string {
   const header = `${file}:${finding.line}:${finding.column}: ${finding.severity}: ${finding.message} [${finding.rule}]`;
@@ -16,10 +16,12 @@ function formatFinding(file: string, finding: Finding, lines: string[]): string 
 }
 
 function main(argv: string[]): number {
-  const files = argv.slice(2);
+  const args = argv.slice(2);
+  const fix = args.includes('--fix');
+  const files = args.filter((arg) => arg !== '--fix');
 
   if (files.length === 0) {
-    process.stderr.write('usage: mdtable-lint <file.md> [file.md ...]\n');
+    process.stderr.write('usage: mdtable-lint [--fix] <file.md> [file.md ...]\n');
     return 1;
   }
 
@@ -32,6 +34,17 @@ function main(argv: string[]): number {
     } catch (err) {
       process.stderr.write(`${file}: could not read file (${(err as Error).message})\n`);
       hasErrors = true;
+      continue;
+    }
+
+    if (fix) {
+      const fixed = fixText(text);
+      if (fixed.fixedCount > 0) {
+        writeFileSync(file, fixed.text, 'utf8');
+        process.stdout.write(`${file}: padded ${fixed.fixedCount} short row${fixed.fixedCount === 1 ? '' : 's'}\n`);
+      } else {
+        process.stdout.write(`${file}: no short rows found\n`);
+      }
       continue;
     }
 
