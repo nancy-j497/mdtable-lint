@@ -1,4 +1,5 @@
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
+import { join } from 'path';
 import { lintText, fixText, Finding } from './linter.js';
 
 function formatFinding(file: string, finding: Finding, lines: string[]): string {
@@ -15,13 +16,60 @@ function formatFinding(file: string, finding: Finding, lines: string[]): string 
   ].join('\n');
 }
 
+// Expands directory arguments into the .md files they contain, recursing
+// into subdirectories but skipping dotfiles and dotdirs (.git and the
+// like). A path that isn't a directory, including one that doesn't exist,
+// is passed through unchanged so the existing per-file read error below
+// still reports it.
+function collectMarkdownFiles(paths: string[]): string[] {
+  const result: string[] = [];
+  for (const path of paths) {
+    walk(path, result);
+  }
+  return result;
+}
+
+function walk(path: string, result: string[]): void {
+  let isDirectory: boolean;
+  try {
+    isDirectory = statSync(path).isDirectory();
+  } catch {
+    result.push(path);
+    return;
+  }
+
+  if (!isDirectory) {
+    result.push(path);
+    return;
+  }
+
+  for (const entry of readdirSync(path, { withFileTypes: true })) {
+    if (entry.name.startsWith('.')) {
+      continue;
+    }
+    const entryPath = join(path, entry.name);
+    if (entry.isDirectory()) {
+      walk(entryPath, result);
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      result.push(entryPath);
+    }
+  }
+}
+
 function main(argv: string[]): number {
   const args = argv.slice(2);
   const fix = args.includes('--fix');
-  const files = args.filter((arg) => arg !== '--fix');
+  const targets = args.filter((arg) => arg !== '--fix');
+
+  if (targets.length === 0) {
+    process.stderr.write('usage: mdtable-lint [--fix] <file.md|dir> [file.md|dir ...]\n');
+    return 1;
+  }
+
+  const files = collectMarkdownFiles(targets);
 
   if (files.length === 0) {
-    process.stderr.write('usage: mdtable-lint [--fix] <file.md> [file.md ...]\n');
+    process.stderr.write('no markdown files found\n');
     return 1;
   }
 

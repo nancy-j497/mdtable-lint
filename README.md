@@ -21,6 +21,13 @@ npm run build
 node dist/cli.js docs/README.md notes.md
 ```
 
+A directory argument is expanded recursively to every `.md` file inside it,
+skipping dotfiles and dotdirs (`.git` and the like):
+
+```
+node dist/cli.js docs/
+```
+
 It exits with status 1 if any file has an error-level finding, so it's
 usable as a pre-commit or CI check. Given this file:
 
