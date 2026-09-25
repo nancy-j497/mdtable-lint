@@ -84,6 +84,16 @@ table. Anything inside a fenced code block (` ``` ` or `~~~`) is ignored,
 so example tables in documentation about markdown don't get linted as if
 they were real.
 
+## Tests
+
+```
+npm test
+```
+
+Runs the fixture tables in `src/linter.test.ts` through Node's built-in test
+runner (`node --test`), checking both the findings `lintText` reports and
+the rewrites `fixText` makes.
+
 ## Design notes
 
 There are no runtime dependencies. The row splitter in `src/linter.ts`
